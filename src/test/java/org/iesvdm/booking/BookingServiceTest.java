@@ -6,11 +6,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentCaptor.*;
+import static org.mockito.ArgumentMatchers.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Arrays;
 
 public class BookingServiceTest {
 
@@ -64,7 +67,16 @@ public class BookingServiceTest {
      */
     @Test
     void getAvailablePlaceCountTest() {
+        /* Creamos las habitaciones y las metemos en una lista*/
+        Room room1 = Mockito.spy(new Room("1", 1));
+        Room room2 = Mockito.spy(new Room("2", 3));
+        Room room3 = Mockito.spy(new Room("3", 6));
 
+        List<Room> list = Arrays.asList(room1, room2, room3);
+        when(roomService.getAvailableRooms()).thenReturn(list);
+
+        /* Método de prueba */
+        assertThat(bookingService.getAvailablePlaceCount()).isEqualTo(10);
     }
 
     /**
@@ -75,7 +87,14 @@ public class BookingServiceTest {
      */
      @Test
     void calculatePriceTest() {
+         /* Creamos las solicitudes */
+         BookingRequest bookingRequest1 = new BookingRequest("1", LocalDate.of(2024, 01, 01), LocalDate.of(2024, 01, 04), 4, true);
 
+         /* Métodos de prueba para los métodos */
+         assertThat(bookingRequest1.getDateFrom()).isEqualTo(LocalDate.of(2024, 01, 01));
+         assertThat(bookingRequest1.getDateTo()).isEqualTo(LocalDate.of(2024, 01, 04));
+         assertThat(bookingRequest1.getGuestCount()).isEqualTo(4);
+         assertThat(bookingService.calculatePrice(bookingRequest1)).isEqualTo(600);
      }
 
 
@@ -91,7 +110,21 @@ public class BookingServiceTest {
      */
     @Test
     void makeBookingTest1() {
+        /* Creamos los captors y las solicitudes */
 
+        ArgumentCaptor<BookingRequest> bookingRequestCaptor = ArgumentCaptor.forClass(BookingRequest.class);
+        ArgumentCaptor<Double> priceCaptor = ArgumentCaptor.forClass(Double.class);
+
+        BookingRequest bookingRequest2 = Mockito.spy(new BookingRequest("1", LocalDate.of(2024, 01, 01), LocalDate.of(2024, 01, 04), 1, true));
+        Room room1 = Mockito.spy(new Room("101", 1));
+
+        when(roomService.findAvailableRoomId(bookingRequest2)).thenReturn("101");
+
+        if (bookingRequest2.isPrepaid()) {
+            bookingService.makeBooking(bookingRequest2);
+            verify(paymentService).pay(bookingRequestCaptor.capture(), priceCaptor.capture());
+            assertThat(priceCaptor.getValue()).isEqualTo(bookingService.calculatePrice(bookingRequest2));
+        }
     }
 
     /**
@@ -107,6 +140,20 @@ public class BookingServiceTest {
      */
     @Test
     void makeBookingTest2() {
+        /* Creamos los captors y las solicitudes */
+        ArgumentCaptor<String> roomIdCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> bookingIdCaptor = ArgumentCaptor.forClass(String.class);
 
+        BookingRequest bookingRequest2 = new BookingRequest("1", LocalDate.of(2024, 01, 01), LocalDate.of(2024, 01, 04), 1, true);
+        when(roomService.findAvailableRoomId(bookingRequest2)).thenReturn("101");
+
+        /* Prueba para bookRoom y captura del roomId */
+        doNothing().when(roomService).bookRoom(roomIdCaptor.capture());
+        bookingService.makeBooking(bookingRequest2);
+
+        /* Verifica el orden de invocación */
+        InOrder inOrder = inOrder(roomService, mailSender);
+        inOrder.verify(roomService).bookRoom(roomIdCaptor.getValue());
+        inOrder.verify(mailSender).sendBookingConfirmation(bookingIdCaptor.capture());
     }
 }
