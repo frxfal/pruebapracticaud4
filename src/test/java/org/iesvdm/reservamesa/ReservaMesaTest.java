@@ -71,5 +71,12 @@ public class ReservaMesaTest {
         /* Método de prueba */
         assertEquals(0, reservaMesa.buscarCompartirNMesasConsecutivas(2, 2));
     }
+    @Test
+    void comensalesTotalesTest() {
+        ReservaMesa reservaMesa = new ReservaMesa();
+        int[] mesas = {2, 4, 1, 0}; // Array de ocupación de mesas
+        reservaMesa.setMesas(mesas);
 
+        assertEquals(7, reservaMesa.comensalesTotales());
+    }
 }
