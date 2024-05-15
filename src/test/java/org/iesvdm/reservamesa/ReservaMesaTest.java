@@ -67,7 +67,7 @@ public class ReservaMesaTest {
         int[] mesas = {2, 4, 1, 0};
 
         reservaMesa.setMesas(mesas);
-
+        
         /* Método de prueba */
         assertEquals(0, reservaMesa.buscarCompartirNMesasConsecutivas(2, 2));
     }
