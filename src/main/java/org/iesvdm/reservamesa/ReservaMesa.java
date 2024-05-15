@@ -32,7 +32,6 @@ public class ReservaMesa {
         }
     }
 
-
     void imprimir()
     {
         String ocupacion = "";
